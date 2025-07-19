@@ -12,15 +12,14 @@ jobs:
     steps:
       - name: Clone domain-list-community repo
         run: |
-          git clone --depth=1 https://github.com/v2ray/domain-list-community.git domain-list-community
+          git clone --depth=1 https://github.com/v2ray/domain-list-community.git /domain-list-community
 
       - name: Checkout current repo
         uses: actions/checkout@v4
 
       - name: Copy data directory into current repo
         run: |
-          rm -rf ./data
-          cp -r ./domain-list-community/data ./data
+          cp -r /domain-list-community/data ./data
 
       - name: Set up Go
         uses: actions/setup-go@v5
