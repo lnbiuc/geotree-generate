@@ -43,22 +43,17 @@ jobs:
           git clone https://github.com/lnbiuc/geosite-tree.git out_repo
           cd out_repo
 
-          # 尝试 checkout dev 分支，如果不存在就创建
-          if git ls-remote --exit-code --heads origin dev; then
-            git checkout dev
-          else
-            git checkout -b dev
-          fi
+          git checkout main
 
       - name: Copy index.html to target repo
         run: |
           cp index.html out_repo/
 
-      - name: Commit and push to dev branch
+      - name: Commit and push to main branch
         run: |
           cd out_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
           git commit -m "更新时间：$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.TARGET_REPO_TOKEN }}@github.com/lnbiuc/geosite-tree.git dev
+          git push https://x-access-token:${{ secrets.TARGET_REPO_TOKEN }}@github.com/lnbiuc/geosite-tree.git main
