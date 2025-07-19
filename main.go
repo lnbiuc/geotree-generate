@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -38,38 +37,6 @@ func NewCategoryAnalyzer(dataDir string) *CategoryAnalyzer {
 		tree:           &TreeNode{Name: "domain-list-community", Children: make(map[string]*TreeNode)},
 		processedFiles: make(map[string]bool),
 	}
-}
-
-func DownloadV2RayRepoData() {
-	repoURL := "https://github.com/v2ray/domain-list-community.git"
-	tmpDir := "v2ray_repo_tmp"
-
-	// 清理旧的临时目录（如果存在）
-	_ = os.RemoveAll(tmpDir)
-
-	// 1. clone 仓库
-	fmt.Println("Cloning repository...")
-	cmd := exec.Command("git", "clone", "--depth=1", repoURL, tmpDir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		_ = fmt.Errorf("git clone failed: %w", err)
-	}
-
-	// 2. 复制 /data 到当前目录
-	srcDataPath := filepath.Join(tmpDir, "data")
-	dstDataPath := "./data"
-
-	fmt.Println("Copying data directory...")
-	err := copyDir(srcDataPath, dstDataPath)
-	if err != nil {
-		_ = fmt.Errorf("copy data dir failed: %w", err)
-	}
-
-	// 3. 删除临时 clone 的目录
-	_ = os.RemoveAll(tmpDir)
-
-	fmt.Println("Done.")
 }
 
 func copyDir(src string, dst string) error {
@@ -620,9 +587,8 @@ func main() {
 	analyzer := NewCategoryAnalyzer(dataDir)
 
 	if err := analyzer.ScanDataDirectory(); err != nil {
-		DownloadV2RayRepoData()
-		//fmt.Printf("错误: %v\n", err)
-		//os.Exit(1)
+		fmt.Printf("错误: %v\n", err)
+		os.Exit(1)
 	}
 
 	analyzer.BuildTree()

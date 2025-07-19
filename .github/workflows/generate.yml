@@ -1,55 +1,64 @@
-name: Build and Publish Index
+name: Weekly Geosite Build
 
 on:
   schedule:
-    - cron: '0 6 * * 1' # 每周一 06:00 UTC (北京时间周一下午2点)
-  workflow_dispatch: # 允许手动触发
+    - cron: '0 6 * * 1'  # 每周一 6:00 UTC（北京时间周一下午 2 点）
+  workflow_dispatch:      # 手动触发
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout 当前仓库
+      - name: Clone domain-list-community repo
+        run: |
+          git clone --depth=1 https://github.com/v2ray/domain-list-community.git domain-list-community
+
       - name: Checkout current repo
         uses: actions/checkout@v4
 
-      # 2. 安装 Go
+      - name: Copy data directory into current repo
+        run: |
+          rm -rf ./data
+          cp -r ./domain-list-community/data ./data
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      # 3. 执行 Go 程序
       - name: Run main.go
         run: go run main.go
 
-      # 4. 检查是否生成 domain_tree.html
       - name: Check if domain_tree.html exists
-        id: check_file
         run: |
           if [ ! -f domain_tree.html ]; then
-            echo "domain_tree.html not found. Exiting with failure."
+            echo "❌ domain_tree.html not found, exiting with failure."
             exit 1
           fi
           mv domain_tree.html index.html
 
-      # 5. Clone 目标仓库
       - name: Clone target repo
         run: |
           git clone https://github.com/lnbiuc/geosite-tree.git out_repo
+          cd out_repo
 
-      # 6. 拷贝 index.html 到目标仓库
-      - name: Copy index.html
+          # 尝试 checkout dev 分支，如果不存在就创建
+          if git ls-remote --exit-code --heads origin dev; then
+            git checkout dev
+          else
+            git checkout -b dev
+          fi
+
+      - name: Copy index.html to target repo
         run: |
           cp index.html out_repo/
 
-      # 7. 提交 index.html 到目标仓库
-      - name: Commit and push
+      - name: Commit and push to dev branch
         run: |
           cd out_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "更新 index.html：$(date '+%Y-%m-%d %H:%M:%S')"
-          git push https://x-access-token:${{ secrets.TARGET_REPO_TOKEN }}@github.com/lnbiuc/geosite-tree.git HEAD:main
+          git commit -m "更新时间：$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.TARGET_REPO_TOKEN }}@github.com/lnbiuc/geosite-tree.git dev
