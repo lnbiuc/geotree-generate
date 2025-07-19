@@ -10,16 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone domain-list-community repo
-        run: |
-          git clone --branch=main https://github.com/v2ray/domain-list-community.git domain-list-community
-          if [ ! -d "domain-list-community/data" ]; then
-            echo "❌ data directory not found in cloned repo!"
-            exit 1
-          fi
-
       - name: Checkout current repo
         uses: actions/checkout@v4
+
+      - name: Clone domain-list-community repo
+        run: |
+          git clone --depth=1 https://github.com/v2ray/domain-list-community.git domain-list-community
 
       - name: Copy data directory into current repo
         run: |
